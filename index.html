@@ -26,6 +26,11 @@
     <meta name="twitter:description"
         content="Portfolio and resume of Spencer M., Computer Science major at Gonzaga University.">
     <meta name="twitter:image" content="https://sm024.fyi/banner.jpg">
+    <meta name="color-scheme" content="light dark">
+    <script>
+        const systemDarkMode = window.matchMedia("(prefers-color-scheme: dark)");
+        document.documentElement.classList.toggle("dark", systemDarkMode.matches);
+    </script>
     <link href="/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <script type="application/ld+json">
@@ -44,30 +49,21 @@
         </script>
 </head>
 
-<body id='body' class="bg-white dark:bg-gray-900 transition-colors duration-200">
+<body id="body" class="bg-white dark:bg-gray-900 transition-colors duration-200">
     <script>
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
-        var runOnce = false;
-
-        function systemDarkMode() {
-            var tmp = document.getElementById('body');
-            if (prefersDark.matches) {
-                tmp.classList.add("dark");
-            } else if (tmp.classList.contains("dark")) {
-                tmp.classList.remove("dark")
-            }
-            runOnce = true;
+        function applySystemDarkMode(event) {
+            document.documentElement.classList.toggle("dark", event.matches);
+            initDarkMode();
         }
 
         function initDarkMode() {
-            var tmp = document.getElementById('body')
             var button = document.getElementById('btn-darkmode')
 
-            if (!runOnce) {
-                systemDarkMode();
+            if (!button) {
+                return;
             }
 
-            if (tmp.classList.contains('dark')) {
+            if (document.documentElement.classList.contains('dark')) {
                 button.classList.remove('bi-moon-fill')
                 button.classList.remove('text-white')
                 button.classList.add('bi-sun-fill')
@@ -79,15 +75,11 @@
                 button.classList.add('text-white')
             }
         }
-        prefersDark.addListener(systemDarkMode)
+        systemDarkMode.addEventListener("change", applySystemDarkMode)
         window.onload = initDarkMode
+
         function toggleDarkMode() {
-            var tmp = document.getElementById('body')
-            if (tmp.classList.contains('dark')) {
-                tmp.classList.remove('dark')
-            } else {
-                tmp.classList.add('dark')
-            }
+            document.documentElement.classList.toggle('dark')
             initDarkMode()
         }
     </script>
