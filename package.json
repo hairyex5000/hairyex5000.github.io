@@ -12,13 +12,16 @@
   },
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
-  "main": "index.js",
+  "type": "module",
+  "packageManager": "bun@1.2.15",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite --configLoader runner",
+    "build": "vite build --configLoader runner",
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.14",
+    "@tailwindcss/vite": "^4.2.1",
+    "vite": "^7.0.0",
     "tailwindcss": "^4.2.1"
   }
 }
