@@ -51,6 +51,114 @@
 
 <body id="body" class="bg-white dark:bg-gray-900 transition-colors duration-200">
     <script>
+        const usa250DisplayStartDate = new Date("2026-01-01T00:00:00-05:00");
+        const usa250TargetDate = new Date("2026-07-04T00:00:00-04:00");
+        const usa250EndDate = new Date("2026-07-05T00:00:00-04:00");
+        const usa250FireworksDuration = 10000;
+        let usa250DevDate = null;
+        let usa250DevForceHidden = false;
+        let usa250FireworksStartedAt = null;
+
+        function setUsa250CountdownState(state) {
+            const banner = document.querySelector(".usa250-banner");
+            const countdown = document.getElementById("usa250-countdown");
+            const fireworks = document.getElementById("usa250-fireworks");
+
+            if (!banner || !countdown || !fireworks) {
+                return;
+            }
+
+            usa250DevForceHidden = state === "hidden";
+
+            if (state === "countdown") {
+                usa250DevDate = new Date("2026-07-03T12:00:00-04:00");
+                usa250FireworksStartedAt = null;
+            }
+
+            if (state === "celebration") {
+                usa250DevDate = new Date("2026-07-04T12:00:00-04:00");
+                usa250FireworksStartedAt = null;
+            }
+
+            if (state === "hidden") {
+                usa250DevDate = new Date("2026-07-05T00:00:00-04:00");
+                usa250FireworksStartedAt = null;
+            }
+
+            updateUsa250Countdown();
+        }
+
+        function updateUsa250Countdown(currentDate) {
+            const banner = document.querySelector(".usa250-banner");
+            const countdown = document.getElementById("usa250-countdown");
+            const fireworks = document.getElementById("usa250-fireworks");
+
+            if (!banner || !countdown || !fireworks) {
+                return;
+            }
+
+            const requestedDate = new Date(currentDate);
+            const now = Number.isNaN(requestedDate.getTime()) ? usa250DevDate || new Date() : requestedDate;
+            const remaining = usa250TargetDate - now;
+
+            if (usa250DevForceHidden || now < usa250DisplayStartDate || now >= usa250EndDate) {
+                banner.hidden = true;
+                usa250FireworksStartedAt = null;
+                return;
+            }
+
+            banner.hidden = false;
+
+            if (remaining <= 0 && now < usa250EndDate) {
+                if (usa250FireworksStartedAt === null) {
+                    usa250FireworksStartedAt = Date.now();
+                }
+
+                countdown.textContent = "Happy 250th, USA";
+                countdown.classList.add("usa250-celebrating");
+                fireworks.hidden = Date.now() - usa250FireworksStartedAt >= usa250FireworksDuration;
+                countdown.setAttribute("aria-label", "Happy 250th anniversary, United States of America");
+                return;
+            }
+
+            countdown.classList.remove("usa250-celebrating");
+            fireworks.hidden = true;
+            usa250FireworksStartedAt = null;
+            const totalSeconds = Math.floor(remaining / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            const parts = [
+                [days, "d"],
+                [hours, "h"],
+                [minutes, "m"],
+                [seconds, "s"],
+            ];
+            const label = `${days} days, ${hours} hours, ${minutes} minutes, and ${seconds} seconds until the United States 250th anniversary`;
+
+            countdown.innerHTML = parts
+                .map(([value, unit]) => `<span><strong>${value}</strong>${unit}</span>`)
+                .join("");
+            countdown.setAttribute("aria-label", label);
+        }
+
+        function initUsa250DevMethods() {
+            if (!document.querySelector('script[type="module"][src^="/@vite/client"]')) {
+                return;
+            }
+
+            window.usa250ShowCountdown = function () {
+                setUsa250CountdownState("countdown");
+            };
+            window.usa250ShowCelebration = function () {
+                setUsa250CountdownState("celebration");
+            };
+            window.usa250HideBanner = function () {
+                setUsa250CountdownState("hidden");
+            };
+        }
+
         function applySystemDarkMode(event) {
             document.documentElement.classList.toggle("dark", event.matches);
             initDarkMode();
@@ -82,7 +190,42 @@
             document.documentElement.classList.toggle('dark')
             initDarkMode()
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            updateUsa250Countdown();
+            initUsa250DevMethods();
+        });
+        setInterval(updateUsa250Countdown, 1000);
     </script>
+    <section class="usa250-banner no-print" aria-label="United States 250th anniversary countdown">
+        <div class="usa250-inner">
+            <div class="usa250-mark" aria-hidden="true">
+                <span class="usa250-year">250</span>
+                <span class="usa250-star star-1">&#9733;</span>
+                <span class="usa250-star star-2">&#9733;</span>
+                <span class="usa250-star star-3">&#9733;</span>
+                <span class="usa250-star star-4">&#9733;</span>
+                <span class="usa250-star star-5">&#9733;</span>
+                <span class="usa250-star star-6">&#9733;</span>
+                <span class="usa250-star star-7">&#9733;</span>
+                <span class="usa250-star star-8">&#9733;</span>
+                <span class="usa250-star star-9">&#9733;</span>
+                <span class="usa250-star star-10">&#9733;</span>
+                <span class="usa250-star star-11">&#9733;</span>
+                <span class="usa250-star star-12">&#9733;</span>
+                <span class="usa250-star star-13">&#9733;</span>
+            </div>
+            <div class="usa250-copy">
+                <p class="usa250-kicker">USA 250 Anniversary</p>
+                <div id="usa250-countdown" class="usa250-countdown" aria-live="off"></div>
+            </div>
+            <div id="usa250-fireworks" class="usa250-fireworks" aria-hidden="true" hidden>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </section>
     <div class="align-center transition"><img alt="Gonzaga Banner image" loading="lazy"
             class="no-print w-full mask-b-from-10% object-cover object-center max-h-[33vh]" src="banner.jpg" />
     </div>
