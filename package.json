@@ -17,11 +17,14 @@
   "scripts": {
     "dev": "vite --configLoader runner",
     "build": "vite build --configLoader runner",
-    "preview": "vite preview"
+    "preview": "bun run build && wrangler dev",
+    "deploy": "bun run build && wrangler deploy"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.42.3",
     "@tailwindcss/vite": "^4.2.1",
+    "tailwindcss": "^4.2.1",
     "vite": "^7.0.0",
-    "tailwindcss": "^4.2.1"
+    "wrangler": "^4.105.0"
   }
 }
