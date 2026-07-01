@@ -199,6 +199,147 @@
         });
         setInterval(updateUsa250Countdown, 1000);
     </script>
+    <script>
+        (function () {
+            const CACHE_KEY = "sammamish-weather-v1";
+            const CACHE_TTL_MS = 30 * 60 * 1000;
+            const WTTR_URL = "https://wttr.in/Sammamish?format=j1";
+            const DEFAULT_ICON = "bi-cloud";
+
+            const WEATHER_CODE_TO_ICON = {
+                113: "bi-sun",
+                116: "bi-cloud-sun",
+                119: "bi-cloud",
+                122: "bi-cloud",
+                143: "bi-cloud-fog",
+                176: "bi-cloud-rain",
+                179: "bi-snow",
+                182: "bi-snow",
+                185: "bi-cloud-fog",
+                200: "bi-cloud-lightning-rain",
+                227: "bi-snow",
+                230: "bi-snow",
+                248: "bi-cloud-fog",
+                260: "bi-cloud-fog",
+                263: "bi-cloud-rain",
+                266: "bi-cloud-rain",
+                281: "bi-cloud-rain",
+                284: "bi-cloud-rain",
+                293: "bi-cloud-rain",
+                296: "bi-cloud-rain",
+                299: "bi-cloud-rain",
+                302: "bi-cloud-rain",
+                305: "bi-cloud-rain",
+                308: "bi-cloud-rain",
+                311: "bi-cloud-rain",
+                314: "bi-cloud-rain",
+                317: "bi-cloud-rain",
+                320: "bi-snow",
+                323: "bi-snow",
+                326: "bi-snow",
+                329: "bi-snow",
+                332: "bi-snow",
+                335: "bi-snow",
+                338: "bi-snow",
+                350: "bi-snow",
+                353: "bi-cloud-rain",
+                356: "bi-cloud-rain",
+                359: "bi-cloud-rain",
+                362: "bi-cloud-rain",
+                365: "bi-snow",
+                368: "bi-snow",
+                371: "bi-snow",
+                374: "bi-cloud-rain",
+                377: "bi-snow",
+                386: "bi-cloud-lightning-rain",
+                389: "bi-cloud-lightning-rain",
+                392: "bi-cloud-lightning-rain",
+                395: "bi-snow"
+            };
+
+            function readCache() {
+                try {
+                    const raw = localStorage.getItem(CACHE_KEY);
+                    if (!raw) return null;
+                    const parsed = JSON.parse(raw);
+                    if (!parsed || typeof parsed.fetchedAt !== "number" || typeof parsed.tempF !== "number" || typeof parsed.weatherCode !== "number") {
+                        return null;
+                    }
+                    if (Date.now() - parsed.fetchedAt >= CACHE_TTL_MS) return null;
+                    return parsed;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function writeCache(payload) {
+                try {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(payload));
+                } catch (e) {
+                    // ignore quota / disabled storage
+                }
+            }
+
+            function renderWeather(payload) {
+                const aside = document.getElementById("weather");
+                if (!aside) return;
+                const iconClass = WEATHER_CODE_TO_ICON[String(payload.weatherCode)] || DEFAULT_ICON;
+                const temp = Math.round(payload.tempF);
+                aside.setAttribute("aria-label", "Currently " + temp + " degrees Fahrenheit in Sammamish");
+                aside.innerHTML = '<i class="bi ' + iconClass + '" aria-hidden="true"></i> <span>' + temp + '&deg;F</span>';
+            }
+
+            function renderFallback() {
+                const aside = document.getElementById("weather");
+                if (!aside) return;
+                aside.setAttribute("aria-label", "Sammamish, weather unavailable");
+                aside.textContent = "";
+            }
+
+            function fetchWeather() {
+                if (typeof fetch !== "function") {
+                    return;
+                }
+                const cached = readCache();
+                if (cached) {
+                    renderWeather(cached);
+                    return;
+                }
+
+                fetch(WTTR_URL, { signal: AbortSignal.timeout(10000) })
+                    .then(function (res) {
+                        if (!res.ok) throw new Error("wttr.in responded " + res.status);
+                        return res.json();
+                    })
+                    .then(function (data) {
+                        const current = data && data.current_condition && data.current_condition[0];
+                        const tempF = current && parseInt(current.temp_F, 10);
+                        const weatherCode = current && parseInt(current.weatherCode, 10);
+                        if (!Number.isFinite(tempF) || !Number.isFinite(weatherCode)) {
+                            throw new Error("wttr.in payload missing fields");
+                        }
+                        const payload = {
+                            fetchedAt: Date.now(),
+                            tempF: tempF,
+                            weatherCode: weatherCode
+                        };
+                        writeCache(payload);
+                        renderWeather(payload);
+                    })
+                    .catch(function (err) {
+                        console.warn("Sammamish weather widget:", err && err.message);
+                        renderFallback();
+                    });
+            }
+
+            document.addEventListener("DOMContentLoaded", fetchWeather);
+            document.addEventListener("visibilitychange", function () {
+                if (document.visibilityState === "visible") {
+                    fetchWeather();
+                }
+            });
+        })();
+    </script>
     <section class="usa250-banner no-print" aria-label="United States 250th anniversary countdown">
         <div class="usa250-inner">
             <div class="usa250-mark" aria-hidden="true">
@@ -237,16 +378,20 @@
     </div>
     <div>
         <div class="m-auto p-5 text-black dark:text-white max-w-3xl">
-            <h1>Spencer M.</h1>
-            <h2>Computer Science Major and Developer @ Gonzaga
-                <h3>Sammamish, WA <img alt="United States flag" class='h-4 max-w-min inline' src="flag.png">
-                </h3>
-                <h3 class="no-print">
-                    <a target="_blank" rel="noopener" href="https://www.linkedin.com/in/smundel"
-                        class="hover:text-blue-400 transition bi bi-linkedin" aria-label="LinkedIn"></a>
-                    <a target="_blank" rel="noopener" href="https://github.com/hairyex5000"
-                        class="hover:text-gray-600 transition bi bi-github" aria-label="GitHub"></a>
-                </h3>
+            <div>
+                <h1>Spencer M.</h1>
+                <h2>Computer Science Major and Developer @ Gonzaga
+                    <h3>Sammamish, WA <img alt="United States flag" class='h-4 max-w-min inline' src="flag.png">
+                        <span id="weather" class="ml-2 align-middle text-sm font-normal text-gray-600 dark:text-gray-300"
+                            aria-live="polite" aria-label="Sammamish weather"></span>
+                    </h3>
+                    <h3 class="no-print">
+                        <a target="_blank" rel="noopener" href="https://www.linkedin.com/in/smundel"
+                            class="hover:text-blue-400 transition bi bi-linkedin" aria-label="LinkedIn"></a>
+                        <a target="_blank" rel="noopener" href="https://github.com/hairyex5000"
+                            class="hover:text-gray-600 transition bi bi-github" aria-label="GitHub"></a>
+                    </h3>
+            </div>
 
                 <div class="mt-5">
                     <h2><i class="bi bi-person-workspace"></i> Work Experience</h2>
